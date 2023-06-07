@@ -1,9 +1,26 @@
 # Wavefront bearing generator
 
-Requires only gcc
+## Usage
+
+Requires only gcc.
+
+Compile and process examples with command:
+```
+make all
+```
+
+The program reads data from standard input and prints models to standard output.
+
+See the `examples` for the input format.
+
+Below is the order of the input data:
+![](doc/screen0.png)
+
 
 ## Dimensions
 
+Counts - verticles per round
+Roll (vertex per round) counts - verticles per round (in rolls)
 Epsilon in x-axis and y-axis - additional space between faces in x-axis and y-axis <br>
 Epsilon in z-axis - additional space between faces in z-axis
 

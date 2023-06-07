@@ -13,9 +13,9 @@ The program reads data from standard input and prints models to standard output.
 
 See the `examples` for the input format.
 
-Below is the order of the input data:
+Below is the order of the input data:<br>
 ![](doc/screen0.png)
-`Calculated roll count` and `Calculated roll ray` are generated automatically.
+<br>`Calculated roll count` and `Calculated roll ray` are generated automatically.
 
 
 ## Dimensions

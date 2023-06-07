@@ -107,12 +107,35 @@ void freeObject(Object* obj)
     obj->faceCount = 0;
 }
 
-void printObject(Object obj)
+void printObject(FILE* destination, Object obj)
 {
     for (int i=0;i<obj.vertexCount;i++)
-        fprintf(stdout, "v %.17le %.17le %.17le\n", obj.verticles[i].x, obj.verticles[i].y, obj.verticles[i].z);
+        fprintf(destination, "v %.17le %.17le %.17le\n", obj.verticles[i].x, obj.verticles[i].y, obj.verticles[i].z);
     for (int i=0;i<obj.faceCount;i++)
-        fprintf(stdout, "f %d %d %d\n", obj.faces[i].a+1, obj.faces[i].b+1, obj.faces[i].c+1);
+        fprintf(destination, "f %d %d %d\n", obj.faces[i].a+1, obj.faces[i].b+1, obj.faces[i].c+1);
+}
+
+void printObjectStl(FILE* destination, Object obj)
+{
+    for (int i=0;i<obj.faceCount;i++)
+    {
+        double nx, ny, nz;
+        Vertex A = {obj.verticles[obj.faces[i].b].x - obj.verticles[obj.faces[i].a].x, obj.verticles[obj.faces[i].b].y - obj.verticles[obj.faces[i].a].y, obj.verticles[obj.faces[i].b].z - obj.verticles[obj.faces[i].a].z};
+        Vertex B = {obj.verticles[obj.faces[i].c].x - obj.verticles[obj.faces[i].a].x, obj.verticles[obj.faces[i].c].y - obj.verticles[obj.faces[i].a].y, obj.verticles[obj.faces[i].c].z - obj.verticles[obj.faces[i].a].z};
+        nx = A.y * B.z - A.z * B.y;
+        ny = A.z * B.x - A.x * B.z;
+        nz = A.x * B.y - A.y * B.x;
+        double r = sqrt(nx*nx + ny*ny + nz*nz);        
+        if (r == 0) r = 1;
+        fprintf(destination, "facet normal %.17le %.17le %.17le\n", nx/r, ny/r, nz/r);
+        fprintf(destination, "    outer loop\n");
+        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].a].x, obj.verticles[obj.faces[i].a].y, obj.verticles[obj.faces[i].a].z);
+        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].b].x, obj.verticles[obj.faces[i].b].y, obj.verticles[obj.faces[i].b].z);
+        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].c].x, obj.verticles[obj.faces[i].c].y, obj.verticles[obj.faces[i].c].z);
+        fprintf(destination, "    endloop\n");
+        fprintf(destination, "endfacet\n");        
+    }
+    fprintf(destination, "endsolid bearing\n");
 }
 
 void mergeObjects(Object* preallocatedDest, Object* source, int* vertexOffset, int* faceOffset, double offsetX, double offsetY, double offsetZ)
@@ -280,7 +303,8 @@ int main()
     for (int i=0;i<bearing.vertexCount;i++)
         bearing.verticles[i] = (Vertex){bearing.verticles[i].x * scale, bearing.verticles[i].y * scale, bearing.verticles[i].z * scale};
     
-    printObject(bearing);
+    printObject(stdout, bearing);
+    printObjectStl(stderr, bearing);
 
     freeObject(&rollPartUp);
     freeObject(&rollPartDown);

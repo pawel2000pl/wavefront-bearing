@@ -9,7 +9,19 @@ Compile and process examples with command:
 make all
 ```
 
-The program reads data from standard input and prints models to standard output.
+The program reads data from standard input and prints models to standard output (wavefront) and standard error (stl).
+
+Usage:
+```
+./bin/wf < examples/def.in 
+./bin/wf < examples/def.in 2> models/def.stl
+
+./bin/wf < examples/def.in > models/def.obj 2> /dev/null
+./bin/wf < examples/def.in 2> models/def.stl > /dev/null
+
+./bin/wf < examples/def.in > models/def.obj 2> models/def.stl
+```
+
 
 See the `examples` for the input format.
 

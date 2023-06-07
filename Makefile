@@ -14,7 +14,7 @@ clean:
 	rm -rf models
 	
 examples: bin/wf models
-	bash -c "find examples -name '*.in' -exec bash -c './bin/wf < {} > models/\`basename -s .in {}\`.obj' \;"
+	bash -c "find examples -name '*.in' -exec bash -c './bin/wf < {} > models/\`basename -s .in {}\`.obj 2> models/\`basename -s .in {}\`.stl' \;"
 
 	
 .PHONY: clean all examples

@@ -223,15 +223,15 @@ int main()
     Object outerCover = renderRing(outerRingInnerRay - rollRay*rollCover/2, R, makeHeights(coverThickness), counts);
     
     double rollHeight = d - ((coverThickness>0)?2*(coverThickness+zepsilon):0);
-    double railEpsilon = (rollRailHeight>0)?(fmax(epsilon, zepsilon)+epsilon):0;
+    double railEpsilon = (rollRailHeight>0)?(sqrt(epsilon*epsilon + zepsilon*zepsilon)):0;
     
     Object rollPartUp = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(rollHeight/2, rollRailWidth/2+zepsilon, rollHeight/2, rollRailWidth/2+zepsilon), rollCounts);    
     Object rollPartDown = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(-rollRailWidth/2-zepsilon, -rollHeight/2, -rollRailWidth/2-zepsilon, -rollHeight/2), rollCounts);
     
     Object rollInnerPart = renderRing(fmin((1.f-rollLiner) * rollRay, rollRay - thickness - rollRailHeight - epsilon), rollRay - ((rollRailHeight>0)?(rollRailHeight + railEpsilon):0), makeHeights(rollRailWidth + 2*zepsilon), rollCounts);    
     
-    Object rollRailUp = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(rollRailWidth/2+zepsilon, 0, rollRailWidth/2+zepsilon, rollRailWidth/2+zepsilon), rollCounts);
-    Object rollRailDown = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(-rollRailWidth/2-zepsilon, 0, -rollRailWidth/2-zepsilon, -rollRailWidth/2-zepsilon), rollCounts);
+    Object rollRailUp = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(rollRailWidth/2+railEpsilon, 0, rollRailWidth/2+railEpsilon, rollRailWidth/2+railEpsilon), rollCounts);
+    Object rollRailDown = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(-rollRailWidth/2-railEpsilon, 0, -rollRailWidth/2-railEpsilon, -rollRailWidth/2-railEpsilon), rollCounts);
     
     Object roll;
     roll.vertexCount = rollPartUp.vertexCount + rollPartDown.vertexCount + rollRailUp.vertexCount + rollRailDown.vertexCount + rollInnerPart.vertexCount;
@@ -248,8 +248,8 @@ int main()
     mergeObjects(&roll, &rollRailDown, &vertexOffset, &faceOffset, 0, 0, 0);
     mergeObjects(&roll, &rollInnerPart, &vertexOffset, &faceOffset, 0, 0, 0);
     
-    Object innerRail = renderRing(innerRingOuterRay, innerRingOuterRay + rollRailHeight, makeHeightsFull(rollRailHeight/2, -rollRailHeight/2, 0, 0), counts);
-    Object outerRail = renderRing(outerRingInnerRay - rollRailHeight, outerRingInnerRay, makeHeightsFull(0, 0, rollRailHeight/2, -rollRailHeight/2), counts);
+    Object innerRail = renderRing(innerRingOuterRay, innerRingOuterRay + rollRailHeight, makeHeightsFull(rollRailWidth/2, -rollRailWidth/2, 0, 0), counts);
+    Object outerRail = renderRing(outerRingInnerRay - rollRailHeight, outerRingInnerRay, makeHeightsFull(0, 0, rollRailWidth/2, -rollRailWidth/2), counts);
     
     Object bearing;
     bearing.vertexCount = innerRing.vertexCount + 2 * innerCover.vertexCount + outerRing.vertexCount + 2 * outerCover.vertexCount + nroll * roll.vertexCount + innerRail.vertexCount + outerRail.vertexCount;
@@ -289,6 +289,8 @@ int main()
     freeObject(&outerRing);
     freeObject(&outerCover);
     freeObject(&roll);
+    freeObject(&innerRail);
+    freeObject(&outerRail);
     freeObject(&bearing);
     
     return 0;

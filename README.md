@@ -15,6 +15,7 @@ See the `examples` for the input format.
 
 Below is the order of the input data:
 ![](doc/screen0.png)
+`Calculated roll count` and `Calculated roll ray` are generated automatically.
 
 
 ## Dimensions

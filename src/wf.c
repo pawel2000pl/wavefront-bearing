@@ -204,7 +204,7 @@ int main()
     fprintf(stdout, "# Scale: ");
     fflush(stdout);
     scale = fabs(scanDoubleDef(100));
-    fprintf(stdout, "%.34lf\n", scale);
+    fprintf(stdout, "%lf\n", scale);
     
     double rayToRollCenter = (r + R) / 2;
     int nroll = 2;

@@ -1,40 +1,41 @@
 # Wavefront bearing generator
 
-##### Requires only gcc
+Requires only gcc
 
 ## Dimensions
 
-##### Epsilon in x-axis and y-axis - additional space between faces in x-axis and y-axis
-##### Epsilon in z-axis - additional space between faces in z-axis
+Epsilon in x-axis and y-axis - additional space between faces in x-axis and y-axis <br>
+Epsilon in z-axis - additional space between faces in z-axis
 
-###### View in z-axis direction
+
+<br><br>View in z-axis direction<br>
 ![](doc/screen1.png)
 
-###### The intersection
+<br><br>The intersection<br>
 ![](doc/screen2.png)
 
-###### View in y-axis direction
+<br><br>View in y-axis direction<br>
 ![](doc/screen3.png)
 
 ## Images
 
-###### Example bearing
+<br><br>Example bearing<br>
 ![](doc/screen5.png)
 
-###### Bearing skeleton
+<br><br>Bearing skeleton<br>
 ![](doc/screen4.png)
 
-###### Large bearing
+<br><br>Large bearing<br>
 ![](doc/screen6.png)
 
-###### Bearing with roll liner = 1
+<br><br>Bearing with roll liner = 1<br>
 ![](doc/screen7.png)
 
-###### Bearing with roll cover = 0
+<br><br>Bearing with roll cover = 0<br>
 ![](doc/screen10.png)
 
-###### View on rail of roll
+<br><br>View on rail of roll<br>
 ![](doc/screen8.png)
 
-###### Skeletal side view 
+<br><br>Skeletal side view<br>
 ![](doc/screen9.png)

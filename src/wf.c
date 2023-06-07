@@ -6,7 +6,7 @@ const double PI = 4*atan(1.f);
 
 double scanDoubleDef(double def)
 {
-    int _ = scanf("%lf", &def);
+    (void)!scanf("%lf", &def);
     return def;
 }
 
@@ -223,19 +223,21 @@ int main()
     Object outerCover = renderRing(outerRingInnerRay - rollRay*rollCover/2, R, makeHeights(coverThickness), counts);
     
     double rollHeight = d - ((coverThickness>0)?2*(coverThickness+zepsilon):0);
-    double railEpsilon = (rollRailHeight>0)?(sqrt(epsilon*epsilon + zepsilon*zepsilon)):0;
+    double railEpsilon = (rollRailHeight>0)?(fmax(epsilon, zepsilon)):0;
     
     Object rollPartUp = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(rollHeight/2, rollRailWidth/2+zepsilon, rollHeight/2, rollRailWidth/2+zepsilon), rollCounts);    
     Object rollPartDown = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(-rollRailWidth/2-zepsilon, -rollHeight/2, -rollRailWidth/2-zepsilon, -rollHeight/2), rollCounts);
     
-    Object rollInnerPart = renderRing(fmin((1.f-rollLiner) * rollRay, rollRay - thickness - rollRailHeight - epsilon), rollRay - ((rollRailHeight>0)?(rollRailHeight + railEpsilon):0), makeHeights(rollRailWidth + 2*zepsilon), rollCounts);    
+    Object rollInnerPart1 = renderRing((1.f-rollLiner) * rollRay, rollRay - ((rollRailHeight>0)?(rollRailHeight + railEpsilon):0), makeHeights(rollRailWidth + 2*zepsilon), rollCounts);    
+        
+    Object rollInnerPart2 = renderRing(fmin((1.f-rollLiner) * rollRay, rollRay - thickness - rollRailHeight - epsilon), (1.f-rollLiner) * rollRay, makeHeightsFull(0, 0, rollRailWidth/2 + zepsilon, -rollRailWidth/2 - zepsilon), rollCounts);  
     
     Object rollRailUp = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(rollRailWidth/2+railEpsilon, 0, rollRailWidth/2+railEpsilon, rollRailWidth/2+railEpsilon), rollCounts);
     Object rollRailDown = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(-rollRailWidth/2-railEpsilon, 0, -rollRailWidth/2-railEpsilon, -rollRailWidth/2-railEpsilon), rollCounts);
     
     Object roll;
-    roll.vertexCount = rollPartUp.vertexCount + rollPartDown.vertexCount + rollRailUp.vertexCount + rollRailDown.vertexCount + rollInnerPart.vertexCount;
-    roll.faceCount = rollPartUp.faceCount + rollPartDown.faceCount + rollRailUp.faceCount + rollRailDown.faceCount + rollInnerPart.faceCount;
+    roll.vertexCount = rollPartUp.vertexCount + rollPartDown.vertexCount + rollRailUp.vertexCount + rollRailDown.vertexCount + rollInnerPart1.vertexCount + rollInnerPart2.vertexCount;
+    roll.faceCount = rollPartUp.faceCount + rollPartDown.faceCount + rollRailUp.faceCount + rollRailDown.faceCount + rollInnerPart1.faceCount + rollInnerPart2.faceCount;
     roll.verticles = calloc(roll.vertexCount, sizeof(Vertex));
     roll.faces = calloc(roll.faceCount, sizeof(Face));
     
@@ -246,7 +248,8 @@ int main()
     mergeObjects(&roll, &rollPartDown, &vertexOffset, &faceOffset, 0, 0, 0);
     mergeObjects(&roll, &rollRailUp, &vertexOffset, &faceOffset, 0, 0, 0);
     mergeObjects(&roll, &rollRailDown, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollInnerPart, &vertexOffset, &faceOffset, 0, 0, 0);
+    mergeObjects(&roll, &rollInnerPart1, &vertexOffset, &faceOffset, 0, 0, 0);
+    mergeObjects(&roll, &rollInnerPart2, &vertexOffset, &faceOffset, 0, 0, 0);
     
     Object innerRail = renderRing(innerRingOuterRay, innerRingOuterRay + rollRailHeight, makeHeightsFull(rollRailWidth/2, -rollRailWidth/2, 0, 0), counts);
     Object outerRail = renderRing(outerRingInnerRay - rollRailHeight, outerRingInnerRay, makeHeightsFull(0, 0, rollRailWidth/2, -rollRailWidth/2), counts);
@@ -283,7 +286,8 @@ int main()
     freeObject(&rollPartDown);
     freeObject(&rollRailUp);
     freeObject(&rollRailDown);
-    freeObject(&rollInnerPart);    
+    freeObject(&rollInnerPart1);  
+    freeObject(&rollInnerPart2);    
     freeObject(&innerRing);
     freeObject(&innerCover);
     freeObject(&outerRing);

@@ -7,7 +7,7 @@ models:
 	mkdir -p models
 	
 bin/wf: bin
-	gcc --std=c11 -O3 src/wf.c -o bin/wf -lm
+	gcc --std=c11 -Wall -O3 src/wf.c -o bin/wf -lm
 
 clean:
 	rm -rf bin

@@ -1,5 +1,7 @@
 # Wavefront bearing generator
 
+##### Requires only gcc
+
 ## Dimensions
 
 ##### Epsilon in x-axis and y-axis - additional space between faces in x-axis and y-axis

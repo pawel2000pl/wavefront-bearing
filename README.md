@@ -13,13 +13,17 @@ The program reads data from standard input and prints models to standard output 
 
 Usage:
 ```
-./bin/wf < examples/def.in 
-./bin/wf < examples/def.in 2> models/def.stl
+# Print only one format
+./bin/wf obj < examples/def.in > models/def.obj 
+./bin/wf stl < examples/def.in 2> models/def.stl
 
+# Print wavefront and stl but save only one
 ./bin/wf < examples/def.in > models/def.obj 2> /dev/null
 ./bin/wf < examples/def.in 2> models/def.stl > /dev/null
 
+# Print wavefront and stl and save them all
 ./bin/wf < examples/def.in > models/def.obj 2> models/def.stl
+./bin/wf < examples/def.in obj stl > models/def.obj 2> models/def.stl
 ```
 
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>  
+#include <string.h>
 
 const double PI = 4*atan(1.f);
 
@@ -107,6 +108,16 @@ void freeObject(Object* obj)
     obj->faceCount = 0;
 }
 
+void mergeObjects(Object* preallocatedDest, Object* source, int* vertexOffset, int* faceOffset, double offsetX, double offsetY, double offsetZ)
+{
+    for (int i=0;i<source->faceCount;i++)
+        preallocatedDest->faces[i+(*faceOffset)] = (Face){source->faces[i].a + (*vertexOffset), source->faces[i].b + (*vertexOffset), source->faces[i].c + (*vertexOffset)};
+    (*faceOffset) += source->faceCount;
+    for (int i=0;i<source->vertexCount;i++)
+        preallocatedDest->verticles[i+(*vertexOffset)] = (Vertex){source->verticles[i].x + offsetX, source->verticles[i].y + offsetY, source->verticles[i].z + offsetZ};
+    (*vertexOffset) += source->vertexCount;
+}
+
 void printObject(FILE* destination, Object obj)
 {
     for (int i=0;i<obj.vertexCount;i++)
@@ -117,6 +128,7 @@ void printObject(FILE* destination, Object obj)
 
 void printObjectStl(FILE* destination, Object obj)
 {
+    fprintf(destination, "solid bearing\n\n");
     for (int i=0;i<obj.faceCount;i++)
     {
         double nx, ny, nz;
@@ -128,27 +140,26 @@ void printObjectStl(FILE* destination, Object obj)
         double r = sqrt(nx*nx + ny*ny + nz*nz);        
         if (r == 0) r = 1;
         fprintf(destination, "facet normal %.17le %.17le %.17le\n", nx/r, ny/r, nz/r);
-        fprintf(destination, "    outer loop\n");
-        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].a].x, obj.verticles[obj.faces[i].a].y, obj.verticles[obj.faces[i].a].z);
-        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].b].x, obj.verticles[obj.faces[i].b].y, obj.verticles[obj.faces[i].b].z);
-        fprintf(destination, "        vertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].c].x, obj.verticles[obj.faces[i].c].y, obj.verticles[obj.faces[i].c].z);
-        fprintf(destination, "    endloop\n");
-        fprintf(destination, "endfacet\n");        
+        fprintf(destination, "\touter loop\n");
+        fprintf(destination, "\t\tvertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].a].x, obj.verticles[obj.faces[i].a].y, obj.verticles[obj.faces[i].a].z);
+        fprintf(destination, "\t\tvertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].b].x, obj.verticles[obj.faces[i].b].y, obj.verticles[obj.faces[i].b].z);
+        fprintf(destination, "\t\tvertex %.17le %.17le %.17le\n", obj.verticles[obj.faces[i].c].x, obj.verticles[obj.faces[i].c].y, obj.verticles[obj.faces[i].c].z);
+        fprintf(destination, "\tendloop\n");
+        fprintf(destination, "endfacet\n\n");        
     }
     fprintf(destination, "endsolid bearing\n");
 }
 
-void mergeObjects(Object* preallocatedDest, Object* source, int* vertexOffset, int* faceOffset, double offsetX, double offsetY, double offsetZ)
+int hasArg(int argc, const char** argv, const char* arg)
 {
-    for (int i=0;i<source->faceCount;i++)
-        preallocatedDest->faces[i+(*faceOffset)] = (Face){source->faces[i].a + (*vertexOffset), source->faces[i].b + (*vertexOffset), source->faces[i].c + (*vertexOffset)};
-    (*faceOffset) += source->faceCount;
-    for (int i=0;i<source->vertexCount;i++)
-        preallocatedDest->verticles[i+(*vertexOffset)] = (Vertex){source->verticles[i].x + offsetX, source->verticles[i].y + offsetY, source->verticles[i].z + offsetZ};
-    (*vertexOffset) += source->vertexCount;
+    int arglen = strlen(arg);
+    for (int i=1;i<argc;i++)
+        if (!strncmp(argv[i], arg, arglen))
+            return 1;
+    return 0;
 }
 
-int main()
+int main(int argc, const char** argv)
 {
     double R, r, d, thickness, coverThickness, epsilon, zepsilon, rollCover, rollLiner, rollRailWidth, rollRailHeight, scale;
     int counts, rollCounts;
@@ -303,8 +314,10 @@ int main()
     for (int i=0;i<bearing.vertexCount;i++)
         bearing.verticles[i] = (Vertex){bearing.verticles[i].x * scale, bearing.verticles[i].y * scale, bearing.verticles[i].z * scale};
     
-    printObject(stdout, bearing);
-    printObjectStl(stderr, bearing);
+    if (argc <= 1 || hasArg(argc, argv, "obj"))
+        printObject(stdout, bearing);
+    if (argc <= 1 || hasArg(argc, argv, "stl"))
+        printObjectStl(stderr, bearing);
 
     freeObject(&rollPartUp);
     freeObject(&rollPartDown);

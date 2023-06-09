@@ -34,6 +34,12 @@ struct OBJECT
 };
 typedef struct OBJECT Object;
 
+typedef struct POINT
+{
+    double x;
+    double y;
+} Point;
+
 int rotate1(int x, int max)
 {
     while (x < 0)
@@ -43,58 +49,36 @@ int rotate1(int x, int max)
     return x;
 }
 
-typedef struct HEIGHTS 
+Object renderCustomRing(const Point* points, int pointCount, int countPerRound)
 {
-    double innerHi, innerLo, outerHi, outerLo;
-} Heights;
-
-Heights makeHeights(double height)
-{
-    return (Heights){height/2, -height/2, height/2, -height/2};
-}
-
-Heights makeHeightsFull(double innerHi, double innerLo, double outerHi, double outerLo)
-{
-    return (Heights){innerHi, innerLo, outerHi, outerLo};
-}
-
-Object renderRing(double r, double R, Heights heights, int counts)
-{
-    if (R == 0 || (heights.innerHi == heights.innerLo && heights.outerHi == heights.outerLo) || counts == 0)
-        return (Object){NULL, NULL, 0, 0};
-    if (r < 0) r = 0;
-    
-    int c4 = 4 * counts;
-    Object result = {NULL, NULL, c4, 8 * counts};
+    int verticlesCount = countPerRound * pointCount;
+    Object result = {NULL, NULL, verticlesCount, 2 * verticlesCount};
     result.verticles = calloc(result.vertexCount, sizeof(Vertex));
     result.faces = calloc(result.faceCount, sizeof(Face));
 
-    int j = 0;
-    int k = 0;
-    
-    for (int i=0; i<counts;i++)
+    int vi = 0;
+    int fi = 0;
+
+    for (int i=0; i<countPerRound;i++)
     {   
-        double angle = 2.f * PI * i / (double)counts;
+        double angle = 2.f * PI * i / (double)countPerRound;
         double c = cos(angle);
         double s = sin(angle);
         
-        result.verticles[j++] = (Vertex){c*r, s*r, heights.innerHi};
-        result.verticles[j++] = (Vertex){c*r, s*r, heights.innerLo};
-        result.verticles[j++] = (Vertex){c*R, s*R, heights.outerLo};
-        result.verticles[j++] = (Vertex){c*R, s*R, heights.outerHi};
-        
-        int jn[8];
-        for (int n=0;n<8;n++)
-            jn[n] = rotate1(j-n-1, c4);
-    
-        int faceMap[4][4] = {{0, 4, 5, 1}, {1, 5, 6, 2}, {2, 6, 7, 3}, {3, 7, 4, 0}};
-        for (int n=0;n<4;n++)
+        for (int n=0;n<pointCount;n++)
+            result.verticles[vi++] = (Vertex){c*points[n].x, s*points[n].x, points[n].y};
+
+        for (int n=0;n<pointCount;n++)
         {
-            result.faces[k++] = (Face){jn[faceMap[n][0]], jn[faceMap[n][1]], jn[faceMap[n][3]]};
-            result.faces[k++] = (Face){jn[faceMap[n][1]], jn[faceMap[n][2]], jn[faceMap[n][3]]};
+            int a = n+pointCount*i;
+            int b = rotate1(n+1, pointCount)+pointCount*i;
+            int c = rotate1(n+pointCount*(i+1), verticlesCount);
+            int d = rotate1(rotate1(n+1, pointCount)+pointCount*(i+1), verticlesCount);            
+            result.faces[fi++] = (Face){a, b, c};
+            result.faces[fi++] = (Face){b, d, c};
         }
     }
-    
+
     return result;
 }
 
@@ -108,13 +92,13 @@ void freeObject(Object* obj)
     obj->faceCount = 0;
 }
 
-void mergeObjects(Object* preallocatedDest, Object* source, int* vertexOffset, int* faceOffset, double offsetX, double offsetY, double offsetZ)
+void mergeObjects(Object* preallocatedDest, Object* source, int* vertexOffset, int* faceOffset, double offsetX, double offsetY, double offsetZ, double scaleX, double scaleY, double scaleZ)
 {
     for (int i=0;i<source->faceCount;i++)
         preallocatedDest->faces[i+(*faceOffset)] = (Face){source->faces[i].a + (*vertexOffset), source->faces[i].b + (*vertexOffset), source->faces[i].c + (*vertexOffset)};
     (*faceOffset) += source->faceCount;
     for (int i=0;i<source->vertexCount;i++)
-        preallocatedDest->verticles[i+(*vertexOffset)] = (Vertex){source->verticles[i].x + offsetX, source->verticles[i].y + offsetY, source->verticles[i].z + offsetZ};
+        preallocatedDest->verticles[i+(*vertexOffset)] = (Vertex){(source->verticles[i].x + offsetX) * scaleX, (source->verticles[i].y + offsetY) * scaleY, (source->verticles[i].z + offsetZ) * scaleZ};
     (*vertexOffset) += source->vertexCount;
 }
 
@@ -162,7 +146,7 @@ int hasArg(int argc, const char** argv, const char* arg)
 int main(int argc, const char** argv)
 {
     double R, r, d, thickness, coverThickness, epsilon, zepsilon, rollCover, rollLiner, rollRailWidth, rollRailHeight, scale;
-    int counts, rollCounts;
+    int count, rollCount;
     
     fprintf(stdout, "# Bearing wavefront generator\n# (c) Paweł Bielecki 2023\n\n");
     
@@ -223,17 +207,17 @@ int main(int argc, const char** argv)
     zepsilon = fabs(scanDoubleDef(3e-4));
     fprintf(stdout, "%lf\n", zepsilon);
     
-    fprintf(stdout, "# Counts [3-65536]: ");
+    fprintf(stdout, "# Count [3-65536]: ");
     fflush(stdout);
-    counts = abs(scanDoubleDef(256));
-    counts = (counts<3)?3:((counts>65536)?65536:counts);
-    fprintf(stdout, "%d\n", counts);
+    count = abs(scanDoubleDef(256));
+    count = (count<3)?3:((count>65536)?65536:count);
+    fprintf(stdout, "%d\n", count);
     
-    fprintf(stdout, "# Roll (vertex per round) counts [3-65536]: ");
+    fprintf(stdout, "# Roll (vertex per round) count [3-65536]: ");
     fflush(stdout);
-    rollCounts = abs(scanDoubleDef(64));
-    rollCounts = (rollCounts<3)?3:((rollCounts>65536)?65536:rollCounts);
-    fprintf(stdout, "%d\n", rollCounts);
+    rollCount = abs(scanDoubleDef(64));
+    rollCount = (rollCount<3)?3:((rollCount>65536)?65536:rollCount);
+    fprintf(stdout, "%d\n", rollCount);
     
     fprintf(stdout, "# Scale: ");
     fflush(stdout);
@@ -248,90 +232,63 @@ int main(int argc, const char** argv)
     rollRay -= epsilon/2;
     fprintf(stdout, "\n# Calculated roll count: %d\n# Calculated roll ray: %le\n\n", nroll, rollRay);
     
+    double rollCoverSize = rollCover * (rollRay + 2 * epsilon);
     double innerRingOuterRay = rayToRollCenter - rollRay - epsilon;
-    Object innerRing = renderRing(r, innerRingOuterRay, makeHeights(d), counts);
-    Object innerCover = renderRing(r, innerRingOuterRay + rollRay*rollCover/2, makeHeights(coverThickness), counts);
-    
-    double outerRingInnerRay = rayToRollCenter + rollRay + epsilon;
-    Object outerRing = renderRing(outerRingInnerRay, R, makeHeights(d), counts);
-    Object outerCover = renderRing(outerRingInnerRay - rollRay*rollCover/2, R, makeHeights(coverThickness), counts);
-    
-    double rollHeight = d - ((coverThickness>0)?2*(coverThickness+zepsilon):0);
-    double railEpsilon = (rollRailHeight>0)?(fmax(epsilon, zepsilon)):0;
-    
-    Object rollPartUp = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(rollHeight/2, rollRailWidth/2+zepsilon, rollHeight/2, rollRailWidth/2+zepsilon), rollCounts);    
-    Object rollPartDown = renderRing((1.f-rollLiner) * rollRay, rollRay, makeHeightsFull(-rollRailWidth/2-zepsilon, -rollHeight/2, -rollRailWidth/2-zepsilon, -rollHeight/2), rollCounts);
-    
-    Object rollInnerPart1 = renderRing((1.f-rollLiner) * rollRay, rollRay - ((rollRailHeight>0)?(rollRailHeight + railEpsilon):0), makeHeights(rollRailWidth + 2*zepsilon), rollCounts);    
-        
-    Object rollInnerPart2 = renderRing(fmin((1.f-rollLiner) * rollRay, rollRay - thickness - rollRailHeight - epsilon), (1.f-rollLiner) * rollRay, makeHeightsFull(0, 0, rollRailWidth/2 + zepsilon, -rollRailWidth/2 - zepsilon), rollCounts);  
-    
-    Object rollRailUp = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(rollRailWidth/2+railEpsilon, 0, rollRailWidth/2+railEpsilon, rollRailWidth/2+railEpsilon), rollCounts);
-    Object rollRailDown = renderRing(rollRay - rollRailHeight - railEpsilon, rollRay - epsilon, makeHeightsFull(-rollRailWidth/2-railEpsilon, 0, -rollRailWidth/2-railEpsilon, -rollRailWidth/2-railEpsilon), rollCounts);
-    
-    Object roll;
-    roll.vertexCount = rollPartUp.vertexCount + rollPartDown.vertexCount + rollRailUp.vertexCount + rollRailDown.vertexCount + rollInnerPart1.vertexCount + rollInnerPart2.vertexCount;
-    roll.faceCount = rollPartUp.faceCount + rollPartDown.faceCount + rollRailUp.faceCount + rollRailDown.faceCount + rollInnerPart1.faceCount + rollInnerPart2.faceCount;
-    roll.verticles = calloc(roll.vertexCount, sizeof(Vertex));
-    roll.faces = calloc(roll.faceCount, sizeof(Face));
-    
-    int vertexOffset = 0;
-    int faceOffset = 0;
-    
-    mergeObjects(&roll, &rollPartUp, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollPartDown, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollRailUp, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollRailDown, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollInnerPart1, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&roll, &rollInnerPart2, &vertexOffset, &faceOffset, 0, 0, 0);
-    
-    Object innerRail = renderRing(innerRingOuterRay, innerRingOuterRay + rollRailHeight, makeHeightsFull(rollRailWidth/2, -rollRailWidth/2, 0, 0), counts);
-    Object outerRail = renderRing(outerRingInnerRay - rollRailHeight, outerRingInnerRay, makeHeightsFull(0, 0, rollRailWidth/2, -rollRailWidth/2), counts);
-    
+    Point ringIntersection1[8], ringIntersection2[8];
+    ringIntersection1[0] = (Point){r, 0};
+    ringIntersection1[1] = (Point){r, d/2};
+    ringIntersection1[2] = (Point){innerRingOuterRay + rollCoverSize, d/2};
+    ringIntersection1[3] = (Point){innerRingOuterRay + rollCoverSize, d/2 - coverThickness};
+    ringIntersection1[4] = (Point){innerRingOuterRay, d/2 - coverThickness};
+    ringIntersection1[5] = (Point){innerRingOuterRay, rollRailWidth/2};
+    ringIntersection1[6] = (Point){innerRingOuterRay + rollRailHeight, 0};
+    ringIntersection1[7] = (Point){innerRingOuterRay, 0};
+    for (int i=0;i<8;i++)
+        ringIntersection2[i] = (Point){r - ringIntersection1[i].x + R, ringIntersection1[i].y};
+
+    Object ring1 = renderCustomRing(ringIntersection1, 8, count);
+    Object ring2 = renderCustomRing(ringIntersection2, 8, count);
+
+    double rollRayZero = fmin(rollRay * (1.f-rollLiner), rollRay - thickness);
+    double rollRayZeroOnRails = fmin(rollRayZero, fmax(0.f, rollRay - thickness - rollRailHeight));
+    double delta45 = (rollRailHeight>0) ? (rollRayZero - rollRayZeroOnRails) / (rollRailHeight) * (rollRailWidth / 2 + zepsilon) / 2 : 0;
+    Point rollIntersection[7];
+    rollIntersection[0] = (Point){rollRay - rollRailHeight, 0};
+    rollIntersection[1] = (Point){rollRay, rollRailWidth/2 + zepsilon};
+    rollIntersection[2] = (Point){rollRay, d/2 - zepsilon - coverThickness};
+    rollIntersection[3] = (Point){rollRayZero, d/2 - zepsilon - coverThickness};
+    rollIntersection[4] = (Point){rollRayZero, rollRailWidth/2 + thickness + delta45};
+    rollIntersection[5] = (Point){rollRayZeroOnRails, rollRailWidth/2 + thickness - delta45};
+    rollIntersection[6] = (Point){rollRayZeroOnRails, 0};
+
+    Object roll = renderCustomRing(rollIntersection, 7, count);
+
     Object bearing;
-    bearing.vertexCount = innerRing.vertexCount + 2 * innerCover.vertexCount + outerRing.vertexCount + 2 * outerCover.vertexCount + nroll * roll.vertexCount + innerRail.vertexCount + outerRail.vertexCount;
-    bearing.faceCount = innerRing.faceCount + 2 * innerCover.faceCount + outerRing.faceCount + 2 * outerCover.faceCount + nroll * roll.faceCount + innerRail.faceCount + outerRail.faceCount;    
+    bearing.vertexCount = 2 * (roll.vertexCount * nroll + ring1.vertexCount + ring2.vertexCount);
+    bearing.faceCount = 2 * (roll.faceCount * nroll + ring1.faceCount + ring2.faceCount);
     bearing.verticles = calloc(bearing.vertexCount, sizeof(Vertex));
     bearing.faces = calloc(bearing.faceCount, sizeof(Face));
     
-    vertexOffset = 0;
-    faceOffset = 0;
-    
-    mergeObjects(&bearing, &innerRing, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&bearing, &innerCover, &vertexOffset, &faceOffset, 0, 0, d/2-coverThickness/2);
-    mergeObjects(&bearing, &innerCover, &vertexOffset, &faceOffset, 0, 0, -d/2+coverThickness/2);
-    
-    mergeObjects(&bearing, &outerRing, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&bearing, &outerCover, &vertexOffset, &faceOffset, 0, 0, d/2-coverThickness/2);
-    mergeObjects(&bearing, &outerCover, &vertexOffset, &faceOffset, 0, 0, -d/2+coverThickness/2);
-    
-    mergeObjects(&bearing, &innerRail, &vertexOffset, &faceOffset, 0, 0, 0);
-    mergeObjects(&bearing, &outerRail, &vertexOffset, &faceOffset, 0, 0, 0);
-    
-    for (int i=0;i<nroll;i++)
-        mergeObjects(&bearing, &roll, &vertexOffset, &faceOffset, rayToRollCenter * cos(i*2.f*PI/nroll), rayToRollCenter * sin(i*2.f*PI/nroll), 0);
-    
-    for (int i=0;i<bearing.vertexCount;i++)
-        bearing.verticles[i] = (Vertex){bearing.verticles[i].x * scale, bearing.verticles[i].y * scale, bearing.verticles[i].z * scale};
-    
+    int vertexOffset = 0;
+    int faceOffset = 0;
+
+    for (int zscale=-1;zscale < 2;zscale+=2)
+    {
+        mergeObjects(&bearing, &ring1, &vertexOffset, &faceOffset, 0, 0, 0, scale, scale, scale * zscale);
+        mergeObjects(&bearing, &ring2, &vertexOffset, &faceOffset, 0, 0, 0, scale, scale, scale * zscale);
+
+        for (int i=0;i<nroll;i++)
+            mergeObjects(&bearing, &roll, &vertexOffset, &faceOffset, rayToRollCenter * cos(i*2.f*PI/nroll), rayToRollCenter * sin(i*2.f*PI/nroll), 0, scale, scale, scale * zscale);
+    }
+
     if (argc <= 1 || hasArg(argc, argv, "obj"))
         printObject(stdout, bearing);
     if (argc <= 1 || hasArg(argc, argv, "stl"))
         printObjectStl(stderr, bearing);
-
-    freeObject(&rollPartUp);
-    freeObject(&rollPartDown);
-    freeObject(&rollRailUp);
-    freeObject(&rollRailDown);
-    freeObject(&rollInnerPart1);  
-    freeObject(&rollInnerPart2);    
-    freeObject(&innerRing);
-    freeObject(&innerCover);
-    freeObject(&outerRing);
-    freeObject(&outerCover);
+        
+    freeObject(&ring1);
+    freeObject(&ring2);
     freeObject(&roll);
-    freeObject(&innerRail);
-    freeObject(&outerRail);
     freeObject(&bearing);
     
     return 0;

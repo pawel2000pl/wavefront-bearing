@@ -36,8 +36,8 @@ Below is the order of the input data:<br>
 
 ## Dimensions
 
-Counts - verticles per round
-Roll (vertex per round) counts - verticles per round (in rolls)
+Count - verticles per round
+Roll (vertex per round) count - verticles per round (in rolls)
 Epsilon in x-axis and y-axis - additional space between faces in x-axis and y-axis <br>
 Epsilon in z-axis - additional space between faces in z-axis
 

@@ -73,3 +73,13 @@ Epsilon in z-axis - additional space between faces in z-axis
 
 <br><br>Skeletal side view<br>
 ![](doc/screen9.png)
+
+
+## Practical usage
+
+Adjust the epsilon depending on the accuracy of your printer.
+Too small causes the rollers to stick to the rings.
+Remember to add support.
+Adding support causes additional bearing sticking and problems on first start.
+
+![](doc/photo.jpg)

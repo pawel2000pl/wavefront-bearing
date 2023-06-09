@@ -1,4 +1,4 @@
-# Wavefront bearing generator
+# Wavefront (and stl) bearing generator
 
 ## Usage
 

@@ -249,19 +249,20 @@ int main(int argc, const char** argv)
     Object ring1 = renderCustomRing(ringIntersection1, 8, count);
     Object ring2 = renderCustomRing(ringIntersection2, 8, count);
 
-    double rollRayZero = fmin(rollRay * (1.f-rollLiner), rollRay - thickness);
-    double rollRayZeroOnRails = fmin(rollRayZero, fmax(0.f, rollRay - thickness - rollRailHeight));
+    double rollWallThickness = rollRay * rollLiner;
+    double rollRayZero = rollRay - rollWallThickness;
+    double rollRayZeroOnRails = fmax(0.f, rollRayZero - rollRailHeight);
     double delta45 = (rollRailHeight>0) ? (rollRayZero - rollRayZeroOnRails) / (rollRailHeight) * (rollRailWidth / 2 + zepsilon) / 2 : 0;
     Point rollIntersection[7];
     rollIntersection[0] = (Point){rollRay - rollRailHeight, 0};
     rollIntersection[1] = (Point){rollRay, rollRailWidth/2 + zepsilon};
     rollIntersection[2] = (Point){rollRay, d/2 - zepsilon - coverThickness};
     rollIntersection[3] = (Point){rollRayZero, d/2 - zepsilon - coverThickness};
-    rollIntersection[4] = (Point){rollRayZero, rollRailWidth/2 + thickness + delta45};
-    rollIntersection[5] = (Point){rollRayZeroOnRails, rollRailWidth/2 + thickness - delta45};
+    rollIntersection[4] = (Point){rollRayZero, rollRailWidth/2 + rollWallThickness + delta45};
+    rollIntersection[5] = (Point){rollRayZeroOnRails, rollRailWidth/2 + rollWallThickness - delta45};
     rollIntersection[6] = (Point){rollRayZeroOnRails, 0};
 
-    Object roll = renderCustomRing(rollIntersection, 7, count);
+    Object roll = renderCustomRing(rollIntersection, 7, rollCount);
 
     Object bearing;
     bearing.vertexCount = 2 * (roll.vertexCount * nroll + ring1.vertexCount + ring2.vertexCount);

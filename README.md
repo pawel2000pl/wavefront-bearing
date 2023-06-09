@@ -81,5 +81,6 @@ Adjust the epsilon depending on the accuracy of your printer.
 Too small causes the rollers to stick to the rings.
 Remember to add support.
 Adding support causes additional bearing sticking and problems on first start.
+If the rails are set too large, the rollers may be cut.
 
 ![](doc/photo.jpg)
